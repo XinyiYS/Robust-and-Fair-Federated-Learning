@@ -35,7 +35,7 @@ conda env create -f environment.yml
 
 To run the code in the paper, run this command:
 ```
-python RFFL_run.py -d mnist -N 10 -A 2
+python RFFL_run.py -d mnist -N 10 -A 2 -cuda
 ```
 The above command means to run MNIST dataset, with 10 honest participants and 2 adversaries.
 
