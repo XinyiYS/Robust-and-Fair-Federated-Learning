@@ -57,33 +57,6 @@ class MLP_Net(nn.Module):
 		return F.log_softmax(x, dim=1)
 
 
-class LogisticRegression(nn.Module):
-
-	def __init__(self, input_dim=86, output_dim=2, device=None):
-		super(LogisticRegression, self).__init__()
-		self.input_dim = input_dim
-		self.output_dim = output_dim
-		self.linear = torch.nn.Linear(self.input_dim, self.output_dim)
-
-	def forward(self, x):
-		outputs = self.linear(x)
-		return outputs
-
-
-class MLP(nn.Module):
-
-	def __init__(self, input_dim=86, output_dim=2, device=None):
-		super(MLP, self).__init__()
-		self.fc1 = nn.Linear(input_dim, 32)
-		self.fc2 = nn.Linear(32, output_dim)
-
-		# self.linear = torch.nn.Linear(input_dim, output_dim)
-
-	def forward(self, x):
-		x = F.relu(self.fc1(x))
-		x = self.fc2(x)
-		return F.log_softmax(x, dim=1)
-
 
 # https://pytorch.org/tutorials/beginner/blitz/cifar10_tutorial.html
 # LeNet

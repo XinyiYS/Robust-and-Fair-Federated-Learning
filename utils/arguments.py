@@ -1,8 +1,7 @@
 import torch
 from torch import nn, optim
 
-from utils.models_defined import LogisticRegression, MLP, MNIST_LogisticRegression,\
-MLP_Net, CNN_Net, CNN_Text, ResNet18, ResNet18_torch, CNNCifar_TF,
+from utils.models_defined import MNIST_LogisticRegression, MLP_Net, CNN_Net, CNN_Text, ResNet18_torch, CNNCifar_TF
 
 
 mnist_args = {
