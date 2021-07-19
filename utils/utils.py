@@ -214,3 +214,20 @@ def mask_grad_update_by_magnitude(grad_update, mask_constant):
 	for i, update in enumerate(grad_update):
 		grad_update[i].data[update.data.abs() < mask_constant] = 0
 	return grad_update
+
+
+import numpy as np
+np.random.seed(1111)
+
+
+def random_split(sample_indices, m_bins, equal=True):
+	sample_indices = np.asarray(sample_indices)
+	if equal:
+		indices_list = np.array_split(sample_indices, m_bins)
+	else:
+		split_points = np.random.choice(
+			n_samples - 2, m_bins - 1, replace=False) + 1
+		split_points.sort()
+		indices_list = np.split(sample_indices, split_points)
+
+	return indices_list
