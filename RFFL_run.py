@@ -78,7 +78,7 @@ if cmd_args.dataset == 'mnist':
 		participant_rounds = [[N, N*600]]
 	else:
 		participant_rounds = [[5, 3000], [10, 6000], [20, 12000]]
-	splits = ['classimbalance', 'powerlaw', 'uniform']
+	splits = ['uniform', 'classimbalance', 'powerlaw'] 
 	args['rounds'] = 100
 	args['E'] = 3
 
@@ -136,6 +136,7 @@ for n_participants, sample_size_cap in participant_rounds:
 			loss_fn = args['loss_fn']
 
 			print(args)
+			print("Data Split information for honest participants:")
 			data_prepper = Data_Prepper(
 				args['dataset'], train_batch_size=args['batch_size'], n_participants=args['n_participants'], sample_size_cap=args['sample_size_cap'], 
 				train_val_split_ratio=args['train_val_split_ratio'], device=device, args_dict=args)
@@ -144,14 +145,21 @@ for n_participants, sample_size_cap in participant_rounds:
 			test_loader = data_prepper.get_test_loader()
 
 			train_loaders = data_prepper.get_train_loaders(args['n_participants'], args['split'])
-			
-			# each adversary has a copy of the middle train loader, i.e., their quality and quantity are an average of the honest participants
-			adv_loaders = [train_loaders[len(train_loaders)//2] for _ in range(A)]
-			
 			shard_sizes = data_prepper.shard_sizes
-			shard_sizes += [ shard_sizes[len(shard_sizes)//2] for _ in range(A) ]
+
+			adv_loaders = []
+			if A > 0:
+				print("Data Split information for adversaries:")
+
+				# adversarial loaders follows the uniform split, and each has 600 examples
+				adv_data_prepper = Data_Prepper(
+					args['dataset'], train_batch_size=args['batch_size'], n_participants=A, sample_size_cap= 600 * A, 
+					train_val_split_ratio=args['train_val_split_ratio'], device=device, args_dict=args)
+				adv_loaders = adv_data_prepper.get_train_loaders(A, 'uniform')	
+				shard_sizes +=  adv_data_prepper.shard_sizes
+
 			shard_sizes = torch.tensor(shard_sizes).float()
-			relative_shard_sizes = torch.div(shard_sizes, torch.sum(shard_sizes))			
+			relative_shard_sizes = torch.div(shard_sizes, torch.sum(shard_sizes))           
 			print("Number of honest participants: {}. Number of adversaries: {}, type: {}.".format(N, A, atk))
 			print("Shard sizes are: ", shard_sizes.tolist())
 
@@ -194,6 +202,8 @@ for n_participants, sample_size_cap in participant_rounds:
 			local_perfs = defaultdict(list) # local training dataset performance results
 
 			rs_dict = []
+			r_threshold = []
+
 			qs_dict = []
 
 			# ---- FL begins ---- 
@@ -329,18 +339,28 @@ for n_participants, sample_size_cap in participant_rounds:
 					past_phis.append(phis)
 
 					rs = args['alpha'] * rs + (1-args['alpha']) * phis
+					for i in range(N + A):
+						if i not in R_set:
+							rs[i] = 0
 					rs = torch.div(rs, rs.sum())
 
 					# --- reputation threshold
-					R_set_copy = dcopy(R_set)
-					for i in R_set_copy:
-						if rs[i] < threshold *(1.0/len(R_set)):
-							rs[i] = 0
-							R_set.remove(i)
-					
+					# start removing participants only after 10 rounds
+					if _round >= 10:
+						R_set_copy = dcopy(R_set)
+						curr_threshold = threshold * (1.0/ len(R_set_copy))
+
+						for i in range(N + A):
+							# only operation is to remove a reputable participant, if necessary. All others left untouched.
+							if i in R_set_copy and rs[i] < curr_threshold:
+								rs[i] = 0
+								R_set.remove(i)
+								print("---- in round {} removing {}. ".format(_round, i))
+
+
 					rs = torch.div(rs, rs.sum())
+					r_threshold.append( threshold * (1.0 / len(R_set)) )
 					q_ratios = torch.div(rs, torch.max(rs))
-					
 					
 					rs_dict.append(rs)
 					qs_dict.append(q_ratios)
@@ -427,12 +447,12 @@ for n_participants, sample_size_cap in participant_rounds:
 
 
 			with open(oj(folder, 'settings_dict.txt'), 'w') as file:
-			    [file.write(key + ' : ' + str(value) + '\n') for key, value in args.items()]
+				[file.write(key + ' : ' + str(value) + '\n') for key, value in args.items()]
 
 			with open(oj(folder, 'settings_dict.pickle'), 'wb') as f: 
-			    pickle.dump(args, f)
+				pickle.dump(args, f)
 			 
 			# pickle - loading 
 			# with open(oj(folder,'settings_dict.pickle'), 'rb') as f: 
-			    # args = pickle.load(f) 
+				# args = pickle.load(f) 
 
