@@ -1,5 +1,5 @@
 # Robust-and-Fair-Federated-Learning
-Implementing the algorithm from our paper: "A Reputation Mechanism Is All You Need: Collaborative Fairness and Adversarial Robustness in Federated Learning".
+Implementing the algorithm from our paper: "A Reputation Mechanism Is All You Need: Collaborative Fairness and Adversarial Robustness in Federated Learning". Accepted as Oral presentation (13.2%) at International Workshop on Federated Learning for User Privacy and Data Confidentiality in Conjunction with ICML 2021 (FL-ICML'21), view the [workshop page](http://federated-learning.org/fl-icml-2021/).
 
 
 >📋 In this work, we propose a Robust Fair Federated Learning (RFFL) framework to simultaneously achieve adversarial robustness and collaborative fairness in Federated learning by using a reputation mechanism.
