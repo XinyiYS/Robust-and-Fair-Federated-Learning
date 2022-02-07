@@ -146,30 +146,29 @@ def train_model(model, loader, loss_fn, optimizer, device, E=1, **kwargs):
 			else:
 				data, label = batch[0], batch[1]
 
-		data, label = data.to(device), label.to(device)
+			data, label = data.to(device), label.to(device)
 
-		optimizer.zero_grad()
-		pred = model(data)
-		loss_fn(pred, label).backward()
+			optimizer.zero_grad()
+			pred = model(data)
+			loss_fn(pred, label).backward()
 
-		if 'masks' in kwargs:
-			# set the grad for the parameters in the mask to be zero
-			for zero_mask, layer in zip(kwargs['masks'], model.parameters()):				
-				if len(zero_mask) == 0:
-					print("zero mask is empty")
-					print("original grad is:", layer.grad)
+			if 'masks' in kwargs:
+				# set the grad for the parameters in the mask to be zero
+				for zero_mask, layer in zip(kwargs['masks'], model.parameters()):				
+					if len(zero_mask) == 0:
+						print("zero mask is empty")
+						print("original grad is:", layer.grad)
 
+					copy = layer.grad.view(-1)
+					copy.data[zero_mask] = 0
+					layer.grad.data = copy.reshape(layer.grad.size())
+					if len(zero_mask) == 0:
+						print("zero mask is empty")
+						print("masked grad is:", layer.grad)
 
-				copy = layer.grad.view(-1)
-				copy.data[zero_mask] = 0
-				layer.grad.data = copy.reshape(layer.grad.size())
-				if len(zero_mask) == 0:
-					print("zero mask is empty")
-					print("masked grad is:", layer.grad)
+			optimizer.step()
 
-		optimizer.step()
-
-	if 'scheduler' in kwargs: kwargs['scheduler'].step()
+		if 'scheduler' in kwargs: kwargs['scheduler'].step()
 	
 	return model
 
